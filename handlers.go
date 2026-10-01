@@ -19,8 +19,8 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "invalid request body!", http.StatusBadRequest)
 			return
 		}
-		newID := len(tasks) + 1
-		newTask := Task{ID: newID, Title: t.Title, Done: false}
+		newTask := Task{ID: nextID, Title: t.Title, Done: false}
+		nextID++
 		tasks = append(tasks, newTask)
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(newTask)
@@ -66,15 +66,16 @@ func idTaskHandler(w http.ResponseWriter, r *http.Request) {
 		tasks[i].Done = u.Done
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(tasks[i])
-	/*case http.MethodDelete:
-	i := findTaskIndex(id)
-	if i == -1 {
-		http.Error(w, "sorry, there's no task with this ID!", http.StatusNotFound)
-		return
-	}
-
-	*/
+	case http.MethodDelete:
+		i := findTaskIndex(id)
+		if i == -1 {
+			http.Error(w, "sorry, there's no task with this ID!", http.StatusNotFound)
+			return
+		}
+		tasks = append(tasks[:i], tasks[i+1:]...)
+		w.WriteHeader(http.StatusNoContent)
 	default:
 		http.Error(w, "method not allowed!", http.StatusMethodNotAllowed)
+		return
 	}
 }

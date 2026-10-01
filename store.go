@@ -7,6 +7,8 @@ var tasks = []Task{
 	{ID: 4, Title: "Schedule dentist appointment", Done: false},
 }
 
+var nextID = len(tasks) + 1 //proximo ID livre; so aumenta, entao nao repete ID depois de um DELETE
+
 func findTaskIndex(id int) int {
 	for i := range tasks {
 		if tasks[i].ID == id {

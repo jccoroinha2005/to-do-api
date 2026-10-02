@@ -78,7 +78,6 @@ func idTaskHandler(w http.ResponseWriter, r *http.Request) {
 		tasks = append(tasks[:i], tasks[i+1:]...)
 		w.WriteHeader(http.StatusNoContent)
 	default:
-		http.Error(w, "method not allowed!", http.StatusMethodNotAllowed)
-		return
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 	}
 }

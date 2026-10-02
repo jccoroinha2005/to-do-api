@@ -29,8 +29,7 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(newTask)
 	default:
-		http.Error(w, "method not allowed!", http.StatusMethodNotAllowed) //imprima method not allowed e torne o valor do erro = 405
-		return
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed) //imprima method not allowed e torne o valor do erro = 405
 	}
 }
 

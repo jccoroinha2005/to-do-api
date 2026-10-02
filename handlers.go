@@ -44,7 +44,7 @@ func idTaskHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		i := findTaskIndex(id)
 		if i == -1 {
-			http.Error(w, "sorry, there's no task with this ID!", http.StatusNotFound)
+			http.Error(w, "task not found", http.StatusNotFound)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")

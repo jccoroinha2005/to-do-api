@@ -16,7 +16,11 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 		var t titleReceiver
 		err := json.NewDecoder(r.Body).Decode(&t)
 		if err != nil {
-			http.Error(w, "invalid request body!", http.StatusBadRequest)
+			http.Error(w, "invalid request body: expected JSON with a title", http.StatusBadRequest)
+			return
+		}
+		if t.Title == "" {
+			http.Error(w, "title cannot be empty", http.StatusBadRequest)
 			return
 		}
 		newTask := Task{ID: nextID, Title: t.Title, Done: false}

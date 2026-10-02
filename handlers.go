@@ -37,7 +37,7 @@ func idTaskHandler(w http.ResponseWriter, r *http.Request) {
 	idValue := r.PathValue("id")
 	id, err := strconv.Atoi(idValue)
 	if err != nil {
-		http.Error(w, "write a valid ID please!", http.StatusBadRequest)
+		http.Error(w, "invalid task ID: it must be a number", http.StatusBadRequest)
 		return
 	}
 	switch r.Method {

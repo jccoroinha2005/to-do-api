@@ -58,7 +58,7 @@ func idTaskHandler(w http.ResponseWriter, r *http.Request) {
 		var u updatedTask
 		err = json.NewDecoder(r.Body).Decode(&u)
 		if err != nil {
-			http.Error(w, "invalid request body!", http.StatusBadRequest)
+			http.Error(w, "invalid request body: expected JSON with a title and done", http.StatusBadRequest)
 			return
 		}
 		if u.Title == "" {

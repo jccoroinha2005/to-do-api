@@ -8,11 +8,12 @@ import (
 
 func tasksHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
+
 	case http.MethodGet:
 		w.Header().Set("Content-Type", "application/json") //se o metodo for igual a GET, set um header
 		json.NewEncoder(w).Encode(tasks)                   // crie um encoder e transforme a variavel tasks em JSON
+
 	case http.MethodPost:
-		w.Header().Set("Content-Type", "application/json")
 		var t titleReceiver
 		err := json.NewDecoder(r.Body).Decode(&t)
 		if err != nil {
@@ -23,11 +24,15 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "title cannot be empty", http.StatusBadRequest)
 			return
 		}
+
 		newTask := Task{ID: nextID, Title: t.Title, Done: false}
 		nextID++
 		tasks = append(tasks, newTask)
+
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(newTask)
+
 	default:
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed) //imprima method not allowed e torne o valor do erro = 405
 	}
@@ -40,21 +45,26 @@ func idTaskHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid task ID: it must be a number", http.StatusBadRequest)
 		return
 	}
+
 	switch r.Method {
+
 	case http.MethodGet:
 		i := findTaskIndex(id)
 		if i == -1 {
 			http.Error(w, "task not found", http.StatusNotFound)
 			return
 		}
+
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(tasks[i])
+
 	case http.MethodPut:
 		i := findTaskIndex(id)
 		if i == -1 {
 			http.Error(w, "task not found", http.StatusNotFound)
 			return
 		}
+
 		var u updatedTask
 		err = json.NewDecoder(r.Body).Decode(&u)
 		if err != nil {
@@ -65,18 +75,23 @@ func idTaskHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "title cannot be empty", http.StatusBadRequest)
 			return
 		}
+
 		tasks[i].Title = u.Title
 		tasks[i].Done = u.Done
+
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(tasks[i])
+
 	case http.MethodDelete:
 		i := findTaskIndex(id)
 		if i == -1 {
 			http.Error(w, "task not found", http.StatusNotFound)
 			return
 		}
+
 		tasks = append(tasks[:i], tasks[i+1:]...)
 		w.WriteHeader(http.StatusNoContent)
+
 	default:
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 	}

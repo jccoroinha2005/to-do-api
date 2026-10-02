@@ -9,6 +9,7 @@ var tasks = []Task{
 
 var nextID = len(tasks) + 1 //proximo ID livre; so aumenta, entao nao repete ID depois de um DELETE
 
+// retorna a posiçao da task no slice, ou -1 se nao existir
 func findTaskIndex(id int) int {
 	for i := range tasks {
 		if tasks[i].ID == id {

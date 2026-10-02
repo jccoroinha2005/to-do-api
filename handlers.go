@@ -62,7 +62,7 @@ func idTaskHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if u.Title == "" {
-			http.Error(w, "write a valid Title please!", http.StatusBadRequest)
+			http.Error(w, "title cannot be empty", http.StatusBadRequest)
 			return
 		}
 		tasks[i].Title = u.Title

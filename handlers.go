@@ -72,7 +72,7 @@ func idTaskHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		i := findTaskIndex(id)
 		if i == -1 {
-			http.Error(w, "sorry, there's no task with this ID!", http.StatusNotFound)
+			http.Error(w, "task not found", http.StatusNotFound)
 			return
 		}
 		tasks = append(tasks[:i], tasks[i+1:]...)

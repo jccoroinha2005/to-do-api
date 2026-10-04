@@ -1,17 +1,41 @@
 package main
 
 import (
-	"encoding/json" //transformar dados de Golang para JSON
-	"net/http"      //criar servidor e lidar com requisiçoes
+	"encoding/json"
+	"errors"
+	"net/http"
 	"strconv"
+
+	"github.com/jackc/pgx/v5"
 )
 
 func tasksHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 
 	case http.MethodGet:
-		w.Header().Set("Content-Type", "application/json") //se o metodo for igual a GET, set um header
-		json.NewEncoder(w).Encode(tasks)                   // crie um encoder e transforme a variavel tasks em JSON
+		rows, err := db.Query(r.Context(), "SELECT id, title, done FROM tasks ORDER BY id")
+		if err != nil {
+			http.Error(w, "database error", http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+
+		list := []Task{}
+		for rows.Next() {
+			var t Task
+			if err := rows.Scan(&t.ID, &t.Title, &t.Done); err != nil {
+				http.Error(w, "database error", http.StatusInternalServerError)
+				return
+			}
+			list = append(list, t)
+		}
+		if err := rows.Err(); err != nil {
+			http.Error(w, "database error", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(list)
 
 	case http.MethodPost:
 		var t titleReceiver
@@ -25,9 +49,14 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		newTask := Task{ID: nextID, Title: t.Title, Done: false}
-		nextID++
-		tasks = append(tasks, newTask)
+		var newTask Task
+		err = db.QueryRow(r.Context(),
+			"INSERT INTO tasks (title) VALUES ($1) RETURNING id, title, done",
+			t.Title).Scan(&newTask.ID, &newTask.Title, &newTask.Done)
+		if err != nil {
+			http.Error(w, "database error", http.StatusInternalServerError)
+			return
+		}
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
@@ -49,22 +78,22 @@ func idTaskHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 
 	case http.MethodGet:
-		i := findTaskIndex(id)
-		if i == -1 {
+		var t Task
+		err = db.QueryRow(r.Context(),
+			"SELECT id, title, done FROM tasks WHERE id = $1", id).Scan(&t.ID, &t.Title, &t.Done)
+		if errors.Is(err, pgx.ErrNoRows) {
 			http.Error(w, "task not found", http.StatusNotFound)
+			return
+		}
+		if err != nil {
+			http.Error(w, "database error", http.StatusInternalServerError)
 			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(tasks[i])
+		json.NewEncoder(w).Encode(t)
 
 	case http.MethodPut:
-		i := findTaskIndex(id)
-		if i == -1 {
-			http.Error(w, "task not found", http.StatusNotFound)
-			return
-		}
-
 		var u updatedTask
 		err = json.NewDecoder(r.Body).Decode(&u)
 		if err != nil {
@@ -76,20 +105,33 @@ func idTaskHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		tasks[i].Title = u.Title
-		tasks[i].Done = u.Done
+		var t Task
+		err = db.QueryRow(r.Context(),
+			"UPDATE tasks SET title = $1, done = $2 WHERE id = $3 RETURNING id, title, done",
+			u.Title, u.Done, id).Scan(&t.ID, &t.Title, &t.Done)
+		if errors.Is(err, pgx.ErrNoRows) {
+			http.Error(w, "task not found", http.StatusNotFound)
+			return
+		}
+		if err != nil {
+			http.Error(w, "database error", http.StatusInternalServerError)
+			return
+		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(tasks[i])
+		json.NewEncoder(w).Encode(t)
 
 	case http.MethodDelete:
-		i := findTaskIndex(id)
-		if i == -1 {
+		tag, err := db.Exec(r.Context(), "DELETE FROM tasks WHERE id = $1", id)
+		if err != nil {
+			http.Error(w, "database error", http.StatusInternalServerError)
+			return
+		}
+		if tag.RowsAffected() == 0 {
 			http.Error(w, "task not found", http.StatusNotFound)
 			return
 		}
 
-		tasks = append(tasks[:i], tasks[i+1:]...)
 		w.WriteHeader(http.StatusNoContent)
 
 	default:

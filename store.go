@@ -1,5 +1,11 @@
 package main
 
+import (
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+var db *pgxpool.Pool
+
 var tasks = []Task{
 	{ID: 1, Title: "Update project documentation", Done: false},
 	{ID: 2, Title: "Deploy staging environment", Done: true},

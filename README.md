@@ -159,7 +159,7 @@ If you prefer, you can run the API directly. You need Go 1.26+ and a running Pos
 - **`v1.0`**: in-memory version, without a database. To read that code:
 
   ```bash
-  git switch v1.0
+  git checkout v1.0
   git switch main   # to come back
   ```
 

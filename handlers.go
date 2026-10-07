@@ -9,10 +9,12 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+// tasksHandler trata /tasks: GET lista todas as tasks e POST cria uma nova
 func tasksHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 
 	case http.MethodGet:
+		// ORDER BY id mantém a lista sempre na mesma ordem
 		rows, err := db.Query(r.Context(), "SELECT id, title, done FROM tasks ORDER BY id")
 		if err != nil {
 			http.Error(w, "database error", http.StatusInternalServerError)
@@ -20,7 +22,7 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		defer rows.Close()
 
-		list := []Task{}
+		list := []Task{} //slice vazio (e não nil) para o JSON sair como [] e não null
 		for rows.Next() {
 			var t Task
 			if err := rows.Scan(&t.ID, &t.Title, &t.Done); err != nil {
@@ -29,6 +31,7 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			list = append(list, t)
 		}
+		// verifica se algum erro aconteceu durante a leitura das linhas
 		if err := rows.Err(); err != nil {
 			http.Error(w, "database error", http.StatusInternalServerError)
 			return
@@ -49,6 +52,7 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// $1 é um parâmetro (evita SQL injection) e RETURNING devolve a linha criada, já com o id gerado pelo banco
 		var newTask Task
 		err = db.QueryRow(r.Context(),
 			"INSERT INTO tasks (title) VALUES ($1) RETURNING id, title, done",
@@ -63,11 +67,13 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(newTask)
 
 	default:
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed) //imprima method not allowed e torne o valor do erro = 405
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed) //qualquer outro método responde 405
 	}
 }
 
+// idTaskHandler trata /tasks/{id}: GET, PUT e DELETE de uma task específica
 func idTaskHandler(w http.ResponseWriter, r *http.Request) {
+	// pega o {id} da URL e converte para int
 	idValue := r.PathValue("id")
 	id, err := strconv.Atoi(idValue)
 	if err != nil {
@@ -78,6 +84,7 @@ func idTaskHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 
 	case http.MethodGet:
+		// ErrNoRows significa que nenhuma linha tem esse id, ou seja, a task não existe
 		var t Task
 		err = db.QueryRow(r.Context(),
 			"SELECT id, title, done FROM tasks WHERE id = $1", id).Scan(&t.ID, &t.Title, &t.Done)
@@ -122,6 +129,7 @@ func idTaskHandler(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(t)
 
 	case http.MethodDelete:
+		// RowsAffected é 0 quando nenhuma linha tinha esse id
 		tag, err := db.Exec(r.Context(), "DELETE FROM tasks WHERE id = $1", id)
 		if err != nil {
 			http.Error(w, "database error", http.StatusInternalServerError)

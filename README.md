@@ -212,3 +212,7 @@ A short glossary of the ideas behind this project, in case you want to dig deepe
 
 - **Git**: a version control system created by Linus Torvalds, the creator of the Linux kernel. I used it to version and save all of my code, so every commit I made to each file can be seen on GitHub.
 - **Tag**: a name attached to a specific commit, used to mark versions. Here, `v1.0` and `v2.0`.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.

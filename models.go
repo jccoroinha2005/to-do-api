@@ -1,5 +1,6 @@
 package main
 
+// Task representa uma linha da tabela tasks; as tags json definem os nomes dos campos na resposta
 type Task struct {
 	ID    int    `json:"id"`
 	Title string `json:"title"`
